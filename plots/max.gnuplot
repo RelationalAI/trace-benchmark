@@ -9,7 +9,7 @@ set datafile separator ",";
 
 set title '{/Helvetica-Bold MAX Aggregate (1 update per round)}';
 set xlabel 'Round';
-set ylabel 'Latency (ms)';
+set ylabel 'Latency (ns)';
 
 set output "max_1_per_round.pdf"
 
