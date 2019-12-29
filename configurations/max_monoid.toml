@@ -1,5 +1,5 @@
 experiment = "max_monoid"
 distinct_keys = [1, 10, 100, 1000, 10000, 100000]
 rounds = 200
-round_size = [1, 10000]
+round_size = [1, 1000]
 fixpoint_depth = 1
