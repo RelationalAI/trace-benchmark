@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde_derive;
+
 use std::fs::File;
 use std::io::{BufWriter, Read, Write};
 use std::time::Instant;
@@ -5,16 +8,40 @@ use std::time::Instant;
 use rand::distributions::{Distribution, Uniform};
 
 use differential_dataflow::input::Input;
-use differential_dataflow::operators::Reduce;
+use differential_dataflow::operators::Count;
+use differential_dataflow::difference::{Semigroup, Monoid};
 
 use itertools::Itertools;
 
 use trace_benchmark::{Config, Configurations};
 
-type K = u64;
-type V = u64;
+#[derive(Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug, Serialize, Deserialize)]
+struct MaxPlus {
+    pub v: u64
+}
+
+impl core::convert::From<u64> for MaxPlus {
+    fn from(v: u64) -> Self {
+        MaxPlus { v }
+    }
+}
+
+impl<'a> core::ops::AddAssign<&'a Self> for MaxPlus {
+    fn add_assign(&mut self, other: &'a Self) {
+        *self = MaxPlus::from(core::cmp::max(self.v, other.v));
+    }
+}
+
+impl Semigroup for MaxPlus {
+    #[inline] fn is_zero(&self) -> bool { self.v == 0 }
+}
+
+impl Monoid for MaxPlus {
+    #[inline] fn zero() -> Self { MaxPlus { v: 0 } }
+}
+
 type T = u64;
-type R = isize;
+type R = MaxPlus;
 
 fn main() {
     let config_path: String = std::env::args().nth(1).unwrap().parse().unwrap();
@@ -54,11 +81,8 @@ fn main() {
                 let (input, data) = scope.new_collection::<_, R>();
 
                 let probe = data
-                    .reduce(|_k, vals: &[(&V, isize)], output| {
-                        let max: &V = &vals[vals.len() - 1].0;
-                        output.push((max.clone(), 1));
-                    })
-                // .inspect(|x| println!("{:?}", x))
+                    .count()
+                    // .inspect(|x| println!("{:?}", x))
                     .probe();
                 
                 (input, probe)
@@ -68,9 +92,8 @@ fn main() {
                 for i in 0 .. config.round_size {
                     let k = key_dist.sample(&mut rng);
                     let v = value_dist.sample(&mut rng);
-                    let diff = 1;
 
-                    input.update((k, v), diff);
+                    input.update(k, MaxPlus::from(v));
                 }
 
                 input.advance_to(t + 1);
