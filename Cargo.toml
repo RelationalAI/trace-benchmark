@@ -1,0 +1,16 @@
+[package]
+name = "trace-benchmark"
+version = "0.1.0"
+authors = ["Nikolas Göbel <nikolas.goebel@relational.ai>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.7"
+abomonation = "0.7"
+abomonation_derive = "0.5"
+timely = "0.11.1"
+differential-dataflow = "0.11.0"
+serde = "1"
+serde_derive = "1"
+toml = "0.5"
+itertools = "0.8.2"
