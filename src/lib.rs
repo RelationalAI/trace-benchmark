@@ -14,7 +14,10 @@ pub struct Config {
 
 impl Config {
     pub fn path(&self, base: &str) -> String {
-        format!("{}/{}_keys_{}_per_round.csv", base, self.distinct_keys, self.round_size)
+        format!(
+            "{}/{}_keys_{}_per_round.csv",
+            base, self.distinct_keys, self.round_size
+        )
     }
 }
 
@@ -31,7 +34,7 @@ impl Configurations {
     pub fn path(&self) -> String {
         format!("measurements/{}", self.experiment)
     }
-    
+
     pub fn read(path: &str) -> Self {
         let mut file = File::open(path).expect("config file not found");
 

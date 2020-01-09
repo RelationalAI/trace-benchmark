@@ -20,17 +20,18 @@ fn main() {
     let config_path: String = std::env::args().nth(1).unwrap().parse().unwrap();
     let configurations: Configurations = Configurations::read(&config_path);
 
-    let config_iter = configurations.distinct_keys.iter().cloned()
+    let config_iter = configurations
+        .distinct_keys
+        .iter()
+        .cloned()
         .cartesian_product(configurations.round_size.iter().cloned());
 
     for (distinct_keys, round_size) in config_iter.into_iter() {
-
         let base = configurations.path();
         let rounds = configurations.rounds.clone();
         let fixpoint_depth = configurations.fixpoint_depth.clone();
-        
-        timely::execute_from_args(std::env::args().skip(2), move |worker| {
 
+        timely::execute_from_args(std::env::args().skip(2), move |worker| {
             let config = Config {
                 distinct_keys,
                 round_size,
@@ -39,9 +40,10 @@ fn main() {
             };
 
             println!("{:?}", config);
-            
-            let mut out = BufWriter::new(File::create(config.path(&base))
-                                         .expect("failed to create output file"));
+
+            let mut out = BufWriter::new(
+                File::create(config.path(&base)).expect("failed to create output file"),
+            );
 
             let mut rng = rand::thread_rng();
 
@@ -58,14 +60,14 @@ fn main() {
                         let max: &V = &vals[vals.len() - 1].0;
                         output.push((max.clone(), 1));
                     })
-                // .inspect(|x| println!("{:?}", x))
+                    // .inspect(|x| println!("{:?}", x))
                     .probe();
-                
+
                 (input, probe)
             });
 
-            for t in 0 .. config.rounds {
-                for i in 0 .. config.round_size {
+            for t in 0..config.rounds {
+                for i in 0..config.round_size {
                     let k = key_dist.sample(&mut rng);
                     let v = value_dist.sample(&mut rng);
                     let diff = 1;
@@ -86,6 +88,7 @@ fn main() {
 
                 start = Instant::now();
             }
-        }).unwrap();
+        })
+        .unwrap();
     }
 }

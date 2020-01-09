@@ -7,9 +7,9 @@ use std::time::Instant;
 
 use rand::distributions::{Distribution, Uniform};
 
+use differential_dataflow::difference::{Monoid, Semigroup};
 use differential_dataflow::input::Input;
 use differential_dataflow::operators::Count;
-use differential_dataflow::difference::{Semigroup, Monoid};
 
 use itertools::Itertools;
 
@@ -17,7 +17,7 @@ use trace_benchmark::{Config, Configurations};
 
 #[derive(Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Debug, Serialize, Deserialize)]
 struct MaxPlus {
-    pub v: u64
+    pub v: u64,
 }
 
 impl core::convert::From<u64> for MaxPlus {
@@ -33,11 +33,17 @@ impl<'a> core::ops::AddAssign<&'a Self> for MaxPlus {
 }
 
 impl Semigroup for MaxPlus {
-    #[inline] fn is_zero(&self) -> bool { self.v == 0 }
+    #[inline]
+    fn is_zero(&self) -> bool {
+        self.v == 0
+    }
 }
 
 impl Monoid for MaxPlus {
-    #[inline] fn zero() -> Self { MaxPlus { v: 0 } }
+    #[inline]
+    fn zero() -> Self {
+        MaxPlus { v: 0 }
+    }
 }
 
 type T = u64;
@@ -47,17 +53,18 @@ fn main() {
     let config_path: String = std::env::args().nth(1).unwrap().parse().unwrap();
     let configurations: Configurations = Configurations::read(&config_path);
 
-    let config_iter = configurations.distinct_keys.iter().cloned()
+    let config_iter = configurations
+        .distinct_keys
+        .iter()
+        .cloned()
         .cartesian_product(configurations.round_size.iter().cloned());
 
     for (distinct_keys, round_size) in config_iter.into_iter() {
-
         let base = configurations.path();
         let rounds = configurations.rounds.clone();
         let fixpoint_depth = configurations.fixpoint_depth.clone();
-        
-        timely::execute_from_args(std::env::args().skip(2), move |worker| {
 
+        timely::execute_from_args(std::env::args().skip(2), move |worker| {
             let config = Config {
                 distinct_keys,
                 round_size,
@@ -66,9 +73,10 @@ fn main() {
             };
 
             println!("{:?}", config);
-            
-            let mut out = BufWriter::new(File::create(config.path(&base))
-                                         .expect("failed to create output file"));
+
+            let mut out = BufWriter::new(
+                File::create(config.path(&base)).expect("failed to create output file"),
+            );
 
             let mut rng = rand::thread_rng();
 
@@ -84,12 +92,12 @@ fn main() {
                     .count()
                     // .inspect(|x| println!("{:?}", x))
                     .probe();
-                
+
                 (input, probe)
             });
 
-            for t in 0 .. config.rounds {
-                for i in 0 .. config.round_size {
+            for t in 0..config.rounds {
+                for i in 0..config.round_size {
                     let k = key_dist.sample(&mut rng);
                     let v = value_dist.sample(&mut rng);
 
@@ -109,6 +117,7 @@ fn main() {
 
                 start = Instant::now();
             }
-        }).unwrap();
+        })
+        .unwrap();
     }
 }
