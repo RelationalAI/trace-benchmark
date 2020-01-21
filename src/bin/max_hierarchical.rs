@@ -12,7 +12,6 @@ use itertools::Itertools;
 
 use trace_benchmark::{Config, Configurations};
 
-type K = u64;
 type V = u64;
 type T = u64;
 type R = isize;
@@ -48,7 +47,6 @@ fn main() {
 
             let mut rng = rand::thread_rng();
 
-            let key_dist = Uniform::from(0..config.distinct_keys);
             let value_dist = Uniform::from(0..1_000_000);
 
             let mut start = Instant::now();
@@ -90,11 +88,10 @@ fn main() {
 
             for t in 0..config.rounds {
                 for i in 0..config.round_size {
-                    let k = key_dist.sample(&mut rng);
-                    // let v = value_dist.sample(&mut rng);
+                    let v = value_dist.sample(&mut rng);
                     let diff = 1;
 
-                    input.update(k, diff);
+                    input.update(v, diff);
                 }
 
                 input.advance_to(t + 1);
